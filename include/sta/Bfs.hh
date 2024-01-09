@@ -31,7 +31,7 @@ class BfsFwdIterator;
 class BfsBkwdIterator;
 
 // LevelQueue is a vector of vertex vectors indexed by logic level.
-typedef Vector<VertexSeq> LevelQueue;
+typedef Vector<VertexQueue> LevelQueue;
 
 // Abstract base class for forward and backward breadth first search iterators.
 // Visit all of the vertices at a level before moving to the next.

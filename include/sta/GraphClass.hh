@@ -17,6 +17,7 @@
 #pragma once
 
 #include <limits>
+#include <deque>
 
 #include "ObjectId.hh"
 #include "Set.hh"
@@ -40,6 +41,7 @@ typedef ObjectId VertexId;
 typedef ObjectId EdgeId;
 typedef ObjectId ArcId;
 typedef Vector<Vertex*> VertexSeq;
+typedef std::deque<Vertex*> VertexQueue;
 typedef Vector<Edge*> EdgeSeq;
 typedef Set<Edge*> EdgeSet;
 typedef int Level;

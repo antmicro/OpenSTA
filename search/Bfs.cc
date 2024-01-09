@@ -69,7 +69,7 @@ BfsIterator::clear()
 {
   Level level = first_level_;
   while (levelLessOrEqual(level, last_level_)) {
-    VertexSeq &level_vertices = queue_[level];
+    VertexQueue &level_vertices = queue_[level];
     for (auto vertex : level_vertices) {
       if (vertex)
 	vertex->setBfsInQueue(bfs_index_, false);
@@ -85,7 +85,7 @@ BfsIterator::reportEntries(const Network *network)
 {
   Level level = first_level_;
   while (levelLessOrEqual(level, last_level_)) {
-    VertexSeq &level_vertices = queue_[level];
+    VertexQueue &level_vertices = queue_[level];
     if (!level_vertices.empty()) {
       printf("Level %d\n", level);
       for (auto vertex : level_vertices) {
@@ -100,7 +100,7 @@ BfsIterator::reportEntries(const Network *network)
 void 
 BfsIterator::deleteEntries(Level level)
 {
-  VertexSeq &level_vertices = queue_[level];
+  VertexQueue &level_vertices = queue_[level];
   for (auto vertex : level_vertices) {
     if (vertex)
       vertex->setBfsInQueue(bfs_index_, false);
@@ -141,7 +141,7 @@ BfsIterator::visit(Level to_level,
   int visit_count = 0;
   while (levelLessOrEqual(first_level_, last_level_)
 	 && levelLessOrEqual(first_level_, to_level)) {
-    VertexSeq &level_vertices = queue_[first_level_];
+    VertexQueue &level_vertices = queue_[first_level_];
     incrLevel(first_level_);
     // Note that ArrivalVisitor::enqueueRefPinInputDelays may enqueue
     // vertices at this level so range iteration fails if the vector grows.
@@ -175,7 +175,7 @@ BfsIterator::visitParallel(Level to_level,
 	visitors.push_back(visitor->copy());
       while (levelLessOrEqual(first_level_, last_level_)
 	     && levelLessOrEqual(first_level_, to_level)) {
-	VertexSeq &level_vertices = queue_[first_level_];
+	VertexQueue &level_vertices = queue_[first_level_];
 	incrLevel(first_level_);
 	if (!level_vertices.empty()) {
           size_t vertex_count = level_vertices.size();
@@ -234,7 +234,7 @@ BfsIterator::hasNext(Level to_level)
 Vertex *
 BfsIterator::next()
 {
-  VertexSeq &level_vertices = queue_[first_level_];
+  VertexQueue &level_vertices = queue_[first_level_];
   Vertex *vertex = level_vertices.back();
   level_vertices.pop_back();
   vertex->setBfsInQueue(bfs_index_, false);
