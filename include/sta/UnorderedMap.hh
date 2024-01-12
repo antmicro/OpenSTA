@@ -21,6 +21,7 @@
 
 namespace sta {
 
+// Add convenience functions around STL container.
 template <class KEY, class VALUE, class HASH = std::hash<KEY>, class EQUAL = std::equal_to<KEY> >
 class UnorderedMap : public std::unordered_map<KEY, VALUE, HASH, EQUAL>
 {
@@ -191,40 +192,41 @@ public:
   };
 };
   
- // Add convenience functions around STL container.
 template <class KEY, class VALUE, class HASH = std::hash<KEY>, class EQUAL = std::equal_to<KEY> >
-class MapVector : public std::vector<std::pair<KEY, VALUE>>
+class MapVector
 {
+  std::vector<std::pair<KEY, VALUE>> vec;
   EQUAL equal_obj;
+
+  typename std::vector<std::pair<KEY, VALUE>>::iterator find_vec(const KEY &key) const {
+    return std::find(vec.begin(), vec.end(), [&key, this](const std::pair<KEY, VALUE>& elem) {return equal_obj(key, elem.first);});
+  }
+
 public:
   MapVector()
   {
   }
 
-  explicit MapVector(size_t size,
-			const HASH &hash,
-			const EQUAL &equal)
+  MapVector(size_t size,
+	    const HASH &hash,
+	    const EQUAL &equal)
+    :equal_obj(equal)
   {
-    equal_obj = equal;
   }
 
   // Find out if key is in the set.
-  Iterator find(const KEY &key) {
-    return std::find(this->begin(), this->end(), [&key, this](const std::pair<KEY, VALUE>& elem) {return equal_obj(key, elem.first);});
-  }
-
   bool
   hasKey(const KEY key) const
   {
-    return this->find(key) != this->end();
+    return this->find_vec(key) != vec.end();
   }
 
   // Find the value corresponding to key.
   VALUE
   findKey(const KEY key) const
   {
-    auto find_iter = this->find(key);
-    if (find_iter != this->end())
+    auto find_iter = this->find_vec(key);
+    if (find_iter != vec.end())
       return find_iter->second;
     else
       return nullptr;
@@ -235,8 +237,8 @@ public:
 	  VALUE &value,
 	  bool &exists) const
   {
-    auto find_iter = this->find(key);
-    if (find_iter != this->end()) {
+    auto find_iter = this->find_vec(key);
+    if (find_iter != vec.end()) {
       value = find_iter->second;
       exists = true;
     }
@@ -250,8 +252,8 @@ public:
 	  VALUE &value,
 	  bool &exists) const
   {
-    auto find_iter = this->find(key);
-    if (find_iter != this->end()) {
+    auto find_iter = this->find_vec(key);
+    if (find_iter != vec.end()) {
       map_key = find_iter->first;
       value = find_iter->second;
       exists = true;
@@ -264,30 +266,45 @@ public:
   insert(const KEY &key,
 	 VALUE value)
   {
-    auto find_iter = this->find(key);
-    if (find_iter != this->end()) find_iter->second = value;
-    else this->push_back(std::make_pair(key, value));
+    auto find_iter = this->find_vec(key);
+    if (find_iter != vec.end()) find_iter->second = value;
+    else vec.push_back(std::make_pair(key, value));
+  }
+
+  size_t size() const
+  {
+    return vec.size();
+  }
+
+  bool empty() const
+  {
+    return vec.empty();
+  }
+
+  void clear()
+  {
+    vec.clear();
   }
 
   void erase (KEY &key)
   {
-    // std::vector<std::pair<KEY,VALUE>>::erase(std::find(std::vector<std::pair<KEY,VALUE>>::begin(), std::vector<std::pair<KEY,VALUE>>::end(), [&key, this](const KEY& k) {return equal_obj(key, k);}));
+    vec.erase(find_vec(key));
   }
   
   class Iterator
   {
   public:
     Iterator() : container_(nullptr) {}
-    explicit Iterator(std::vector<std::pair<KEY,VALUE>> *container) :
-      container_(container)
+    explicit Iterator(MapVector<KEY, VALUE, HASH, EQUAL> *map) :
+      container_(&map->vec)
     { if (container_ != nullptr) iter_ = container_->begin(); }
-    explicit Iterator(std::vector<std::pair<KEY,VALUE>> &container) :
-      container_(&container)
+    explicit Iterator(MapVector<KEY, VALUE, HASH, EQUAL> &map) :
+      container_(&map.vec)
     { if (container_ != nullptr) iter_ = container_->begin(); }
-    void init(std::vector<std::pair<KEY,VALUE>> *container)
-    { container_ = container; if (container_ != nullptr) iter_=container_->begin();}
-    void init(std::vector<std::pair<KEY,VALUE>> &container)
-    { container_ = &container; if (container_ != nullptr) iter_=container_->begin();}
+    void init(MapVector<KEY, VALUE, HASH, EQUAL> *map)
+    { container_ = &map->vec; if (container_ != nullptr) iter_=container_->begin();}
+    void init(MapVector<KEY, VALUE, HASH, EQUAL> &map)
+    { container_ = &map.vec; if (container_ != nullptr) iter_=container_->begin();}
     bool hasNext() { return container_ != nullptr && iter_ != container_->end(); }
     VALUE next() { return iter_++->second; }
     void next(KEY &key,
@@ -304,16 +321,16 @@ public:
   {
   public:
     ConstIterator() : container_(nullptr) {}
-    explicit ConstIterator(const std::vector<std::pair<KEY,VALUE>> *container) :
-      container_(container)
+    explicit ConstIterator(const MapVector<KEY, VALUE, HASH, EQUAL> *map) :
+      container_(&map->vec)
     { if (container_ != nullptr) iter_ = container_->begin(); }
-    explicit ConstIterator(const std::vector<std::pair<KEY,VALUE>> &container) :
-      container_(&container)
+    explicit ConstIterator(const MapVector<KEY, VALUE, HASH, EQUAL> &map) :
+      container_(&map.vec)
     { if (container_ != nullptr) iter_ = container_->begin(); }
-    void init(const std::vector<std::pair<KEY,VALUE>> *container)
-    { container_ = container; if (container_ != nullptr) iter_=container_->begin();}
-    void init(const std::vector<std::pair<KEY,VALUE>> &container)
-    { container_ = &container; if (container_ != nullptr) iter_=container_->begin();}
+    void init(const MapVector<KEY, VALUE, HASH, EQUAL> *map)
+    { container_ = map; if (container_ != nullptr) iter_=container_->begin();}
+    void init(const MapVector<KEY, VALUE, HASH, EQUAL> &map)
+    { container_ = &map; if (container_ != nullptr) iter_=container_->begin();}
     bool hasNext() { return container_ != nullptr && iter_ != container_->end(); }
     VALUE next() { return iter_++->second; }
     void next(KEY &key,
