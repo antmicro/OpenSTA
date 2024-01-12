@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <vector>
 #include <unordered_map>
 #include <algorithm>
 
@@ -198,8 +199,12 @@ class MapVector
   std::vector<std::pair<KEY, VALUE>> vec;
   EQUAL equal_obj;
 
-  typename std::vector<std::pair<KEY, VALUE>>::iterator find_vec(const KEY &key) const {
-    return std::find(vec.begin(), vec.end(), [&key, this](const std::pair<KEY, VALUE>& elem) {return equal_obj(key, elem.first);});
+  auto find_vec(const KEY &key) const {
+    return std::find_if(vec.begin(), vec.end(), [&key, this](const std::pair<KEY, VALUE>& elem) { return equal_obj(key, elem.first); });
+  }
+
+  auto find_vec(const KEY &key) {
+    return std::find_if(vec.begin(), vec.end(), [&key, this](const std::pair<KEY, VALUE>& elem) { return equal_obj(key, elem.first); });
   }
 
 public:
