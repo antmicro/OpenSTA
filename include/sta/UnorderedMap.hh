@@ -291,7 +291,7 @@ public:
     vec.clear();
   }
 
-  void erase (KEY &key)
+  void erase(KEY &key)
   {
     vec.erase(find_vec(key));
   }
@@ -333,9 +333,9 @@ public:
       container_(&map.vec)
     { if (container_ != nullptr) iter_ = container_->begin(); }
     void init(const MapVector<KEY, VALUE, HASH, EQUAL> *map)
-    { container_ = map; if (container_ != nullptr) iter_=container_->begin();}
+    { container_ = &map->vec; if (container_ != nullptr) iter_=container_->begin();}
     void init(const MapVector<KEY, VALUE, HASH, EQUAL> &map)
-    { container_ = &map; if (container_ != nullptr) iter_=container_->begin();}
+    { container_ = &map.vec; if (container_ != nullptr) iter_=container_->begin();}
     bool hasNext() { return container_ != nullptr && iter_ != container_->end(); }
     VALUE next() { return iter_++->second; }
     void next(KEY &key,
