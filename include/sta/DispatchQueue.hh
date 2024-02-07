@@ -37,15 +37,23 @@ public:
   DispatchQueue& operator=(DispatchQueue&& rhs) = delete;
 
 private:
-  void dispatch_thread_handler(size_t i);
   void terminateThreads();
 
-  std::mutex lock_;
-  std::vector<std::thread> threads_;
-  std::queue<fp_t> q_;
-  std::condition_variable cv_;
-  std::atomic<size_t> pending_task_count_;
-  bool quit_ = false;
+  struct Worker {
+    Worker(DispatchQueue& pool, size_t thread_id) :
+      thread([this, &pool, thread_id] { Worker::dispatch_thread_handler(pool, thread_id); }) {}
+    void dispatch_thread_handler(DispatchQueue& pool, size_t thread_id);
+
+    std::thread thread;
+    std::vector<fp_t> queue = {};
+    std::mutex mtx = {};
+    std::condition_variable cv = {};
+  };
+
+  std::vector<std::unique_ptr<Worker>> workers_;
+  std::atomic<size_t> pending_count_ = 0;
+  std::atomic<bool> quit_ = false;
+  std::size_t next_worker_ = 0;
 };
 
 } // namespace
