@@ -182,4 +182,41 @@ public:
   };
 };
 
+template <class KEY, class VALUE, class CMP = std::less<KEY>>
+class ConcurrentMap : public Map<KEY, VALUE, CMP>
+{
+  std::shared_mutex mutex_;
+
+public:
+  ConcurrentMap() :
+    Map<KEY, VALUE, CMP>()
+  {
+  }
+  explicit ConcurrentMap(const CMP &cmp) :
+    Map<KEY, VALUE, CMP>(cmp)
+  {
+  }
+
+  VALUE&
+  operator[](KEY& key)
+  {
+    std::cout << "writing" << std::endl;
+    return Map<KEY, VALUE, CMP>::operator[](key);
+  }
+
+  VALUE&
+  operator[](const KEY& key)
+  {
+    std::cout << "writing" << std::endl;
+    return Map<KEY, VALUE, CMP>::operator[](key);
+  }
+
+  const VALUE&
+  operator[](const KEY& key)
+  {
+    std::cout << "reading" << std::endl;
+    return Map<KEY, VALUE, CMP>::operator[](key);
+  }
+};
+
 } // namespace
