@@ -19,6 +19,9 @@
 #include <map>
 #include <algorithm>
 
+#include <mutex>
+#include <shared_mutex>
+
 namespace sta {
 
 // Add convenience functions around STL container.
@@ -183,39 +186,71 @@ public:
 };
 
 template <class KEY, class VALUE, class CMP = std::less<KEY>>
-class ConcurrentMap : public Map<KEY, VALUE, CMP>
+class ConcurrentMap : private Map<KEY, VALUE, CMP>
 {
   std::shared_mutex mutex_;
 
+  using Unsafe = Map<KEY, VALUE, CMP>;
+
 public:
-  ConcurrentMap() :
-    Map<KEY, VALUE, CMP>()
+  using Unsafe::Map;
+
+  // Write methods (need unique_lock)
+  void
+  insert(const KEY& key, VALUE value)
   {
-  }
-  explicit ConcurrentMap(const CMP &cmp) :
-    Map<KEY, VALUE, CMP>(cmp)
-  {
+    std::unique_lock lock(mutex_);
+    Unsafe::operator[](key) = value;
   }
 
-  VALUE&
-  operator[](KEY& key)
+  void
+  clear()
   {
-    std::cout << "writing" << std::endl;
-    return Map<KEY, VALUE, CMP>::operator[](key);
+    std::unique_lock lock(mutex_);
+    Unsafe::clear();
   }
 
-  VALUE&
-  operator[](const KEY& key)
-  {
-    std::cout << "writing" << std::endl;
-    return Map<KEY, VALUE, CMP>::operator[](key);
-  }
-
+  // Read methods (shared_lock suffices)
   const VALUE&
   operator[](const KEY& key)
   {
-    std::cout << "reading" << std::endl;
-    return Map<KEY, VALUE, CMP>::operator[](key);
+    std::shared_lock lock(mutex_);
+    return Unsafe::operator[](key);
+  }
+
+  size_t
+  size()
+  {
+    std::shared_lock lock(mutex_);
+    return Unsafe::size();
+  }
+
+  VALUE
+  findKey(const KEY key)
+  {
+    std::shared_lock lock(mutex_);
+    return Unsafe::findKey(key);
+  }
+
+  Unsafe::iterator begin()
+  {
+    std::shared_lock lock(mutex_);
+    return Unsafe::begin();
+  }
+
+  Unsafe::iterator end()
+  {
+    std::shared_lock lock(mutex_);
+    return Unsafe::end();
+  }
+
+  // Iterator
+
+  // Derived methods (safe methods calls, no explicit locks needed)
+  bool
+  empty()
+  {
+    return size() == 0;
   }
 };
 
