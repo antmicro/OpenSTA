@@ -80,7 +80,7 @@ public:
   virtual bool isPiElmore(const Parasitic *parasitic) const = 0;
   virtual Parasitic *findPiElmore(const Pin *drvr_pin,
 				  const RiseFall *rf,
-				  const ParasiticAnalysisPt *ap) const = 0;
+				  const ParasiticAnalysisPt *ap) = 0;
   virtual Parasitic *makePiElmore(const Pin *drvr_pin,
 				  const RiseFall *rf,
 				  const ParasiticAnalysisPt *ap,
@@ -118,7 +118,7 @@ public:
   virtual bool isPiPoleResidue(const Parasitic* parasitic) const = 0;
   virtual Parasitic *findPiPoleResidue(const Pin *drvr_pin,
 				       const RiseFall *rf,
-				       const ParasiticAnalysisPt *ap) const=0;
+				       const ParasiticAnalysisPt *ap) = 0;
   virtual Parasitic *makePiPoleResidue(const Pin *drvr_pin,
 				       const RiseFall *rf,
 				       const ParasiticAnalysisPt *ap,

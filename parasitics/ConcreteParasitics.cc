@@ -1014,7 +1014,7 @@ ConcreteParasitics::deleteDrvrReducedParasitics(const Pin *drvr_pin)
       delete parasitics[i];
     delete [] parasitics;
   }
-  drvr_parasitic_map_[drvr_pin] = nullptr;
+  drvr_parasitic_map_.insert(drvr_pin, nullptr);
 }
 
 void
@@ -1042,7 +1042,7 @@ ConcreteParasitics::isPiElmore(const Parasitic *parasitic) const
 Parasitic *
 ConcreteParasitics::findPiElmore(const Pin *drvr_pin,
 				 const RiseFall *rf,
-				 const ParasiticAnalysisPt *ap) const
+				 const ParasiticAnalysisPt *ap)
 {
   if (!drvr_parasitic_map_.empty()) {
     int ap_rf_index = parasiticAnalysisPtIndex(ap, rf);
@@ -1077,7 +1077,7 @@ ConcreteParasitics::makePiElmore(const Pin *drvr_pin,
     parasitics = new ConcreteParasitic*[ap_rf_count];
     for (int i = 0; i < ap_rf_count; i++)
       parasitics[i] = nullptr;
-    drvr_parasitic_map_[drvr_pin] = parasitics;
+    drvr_parasitic_map_.insert(drvr_pin, parasitics);
   }
   int ap_rf_index = parasiticAnalysisPtIndex(ap, rf);
   ConcreteParasitic *parasitic = parasitics[ap_rf_index];
@@ -1162,7 +1162,7 @@ ConcreteParasitics::isPiPoleResidue(const Parasitic* parasitic) const
 Parasitic *
 ConcreteParasitics::findPiPoleResidue(const Pin *drvr_pin,
 				      const RiseFall *rf,
-				      const ParasiticAnalysisPt *ap) const
+				      const ParasiticAnalysisPt *ap)
 {
   if (!drvr_parasitic_map_.empty()) {
     int ap_rf_index = parasiticAnalysisPtIndex(ap, rf);
@@ -1197,7 +1197,7 @@ ConcreteParasitics::makePiPoleResidue(const Pin *drvr_pin,
     parasitics = new ConcreteParasitic*[ap_rf_count];
     for (int i = 0; i < ap_rf_count; i++)
       parasitics[i] = nullptr;
-    drvr_parasitic_map_[drvr_pin] = parasitics;
+    drvr_parasitic_map_.insert(drvr_pin, parasitics);
   }
   int ap_rf_index = parasiticAnalysisPtIndex(ap, rf);
   ConcreteParasitic *parasitic = parasitics[ap_rf_index];
