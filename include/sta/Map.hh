@@ -194,6 +194,8 @@ class ConcurrentMap : private Map<KEY, VALUE, CMP>
 
 public:
   using Unsafe::Map;
+  using Unsafe::begin;
+  using Unsafe::end;
 
   // Write methods (need unique_lock)
   void
@@ -231,20 +233,6 @@ public:
     std::shared_lock lock(mutex_);
     return Unsafe::findKey(key);
   }
-
-  Unsafe::iterator begin()
-  {
-    std::shared_lock lock(mutex_);
-    return Unsafe::begin();
-  }
-
-  Unsafe::iterator end()
-  {
-    std::shared_lock lock(mutex_);
-    return Unsafe::end();
-  }
-
-  // Iterator
 
   // Derived methods (safe methods calls, no explicit locks needed)
   bool
