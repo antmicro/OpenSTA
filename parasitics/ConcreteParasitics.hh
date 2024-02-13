@@ -33,7 +33,7 @@ class ConcreteParasiticNetwork;
 class ConcreteParasiticNode;
 class ConcreteParasiticDevice;
 
-typedef Map<const Pin*, ConcreteParasitic**> ConcreteParasiticMap;
+typedef ConcurrentMap<const Pin*, ConcreteParasitic**> ConcreteParasiticMap;
 typedef Map<const Net*, ConcreteParasiticNetwork**> ConcreteParasiticNetworkMap;
 typedef Set<ParasiticNode*> ParasiticNodeSet;
 typedef Set<ParasiticDevice*> ParasiticDeviceSet;
