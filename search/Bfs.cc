@@ -18,7 +18,6 @@
 
 #include "Report.hh"
 #include "Debug.hh"
-#include "Mutex.hh"
 #include "DispatchQueue.hh"
 #include "Network.hh"
 #include "Graph.hh"

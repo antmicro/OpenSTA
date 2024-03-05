@@ -21,7 +21,6 @@
 #include "Report.hh"
 #include "Debug.hh"
 #include "Error.hh"
-#include "Mutex.hh"
 #include "Set.hh"
 #include "MinMax.hh"
 #include "Network.hh"

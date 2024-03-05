@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <cmath> // abs
 
-#include "Mutex.hh"
 #include "Report.hh"
 #include "Debug.hh"
 #include "Stats.hh"
@@ -232,15 +231,13 @@ Search::init(StaState *sta)
   worst_slacks_ = nullptr;
   arrival_iter_ = new BfsFwdIterator(BfsIndex::arrival, nullptr, sta);
   required_iter_ = new BfsBkwdIterator(BfsIndex::required, search_adj_, sta);
-  tag_capacity_ = 127;
-  tag_set_ = new TagSet(tag_capacity_);
   clk_info_set_ = new ClkInfoSet(ClkInfoLess(sta));
   tag_next_ = 0;
-  tags_ = new Tag*[tag_capacity_];
-  tag_group_capacity_ = 127;
-  tag_groups_ = new TagGroup*[tag_group_capacity_];
+  tags_.resize(127);
+  tag_set_ = new TagSet(tags_.size());
+  tag_groups_.resize(127);
   tag_group_next_ = 0;
-  tag_group_set_ = new TagGroupSet(tag_group_capacity_);
+  tag_group_set_ = new TagGroupSet(tag_groups_.size());
   pending_latch_outputs_ = new VertexSet(graph_);
   visit_path_ends_ = new VisitPathEnds(this);
   gated_clk_ = new GatedClk(this);
@@ -269,8 +266,6 @@ Search::~Search()
   deleteTags();
   delete tag_set_;
   delete clk_info_set_;
-  delete [] tags_;
-  delete [] tag_groups_;
   delete tag_group_set_;
   delete search_adj_;
   delete eval_pred_;
@@ -2621,9 +2616,13 @@ TagGroup *
 Search::findTagGroup(TagGroupBldr *tag_bldr)
 {
   TagGroup probe(tag_bldr);
-  UniqueLock lock(tag_group_lock_);
-  TagGroup *tag_group = tag_group_set_->findKey(&probe);
+  TagGroup *tag_group;
+  {
+    SharedLock lock(tag_group_lock_);
+    tag_group = tag_group_set_->findKey(&probe);
+  }
   if (tag_group == nullptr) {
+    UniqueLock lock(tag_group_lock_);
     TagGroupIndex tag_group_index;
     if (tag_group_free_indices_.empty())
       tag_group_index = tag_group_next_++;
@@ -2634,21 +2633,9 @@ Search::findTagGroup(TagGroupBldr *tag_bldr)
     tag_group = tag_bldr->makeTagGroup(tag_group_index, this);
     tag_groups_[tag_group_index] = tag_group;
     tag_group_set_->insert(tag_group);
-    // If tag_groups_ needs to grow make the new array and copy the
-    // contents into it before updating tags_groups_ so that other threads
-    // can use Search::tagGroup(TagGroupIndex) without returning gubbish.
-    // std::vector doesn't seem to follow this protocol so multi-thread
-    // search fails occasionally if a vector is used for tag_groups_.
-    if (tag_group_next_ == tag_group_capacity_) {
-      TagGroupIndex new_capacity = nextMersenne(tag_group_capacity_);
-      TagGroup **new_tag_groups = new TagGroup*[new_capacity];
-      memcpy(new_tag_groups, tag_groups_,
-             tag_group_capacity_ * sizeof(TagGroup*));
-      TagGroup **old_tag_groups = tag_groups_;
-      tag_groups_ = new_tag_groups;
-      tag_group_capacity_ = new_capacity;
-      delete [] old_tag_groups;
-      tag_group_set_->reserve(new_capacity);
+    if (tag_group_next_ == tag_groups_.size()) {
+      tag_groups_.resize(nextMersenne(tag_groups_.size()));
+      tag_group_set_->reserve(tag_groups_.size());
     }
     if (tag_group_next_ > tag_group_index_max)
       report_->critical(1510, "max tag group index exceeded");
@@ -2760,25 +2747,26 @@ Search::reportArrivals(Vertex *vertex) const
 TagGroup *
 Search::tagGroup(TagGroupIndex index) const
 {
-  UniqueLock lock(tag_group_lock_);
+  SharedLock lock(tag_group_lock_);
   return tag_groups_[index];
 }
 
 TagGroup *
 Search::tagGroup(const Vertex *vertex) const
 {
-  UniqueLock lock(tag_group_lock_);
   TagGroupIndex index = vertex->tagGroupIndex();
   if (index == tag_group_index_max)
     return nullptr;
-  else
+  else {
+    SharedLock lock(tag_group_lock_);
     return tag_groups_[index];
+  }
 }
 
 TagGroupIndex
 Search::tagGroupCount() const
 {
-  UniqueLock lock(tag_group_lock_);
+  SharedLock lock(tag_group_lock_);
   return tag_group_set_->size();
 }
 
@@ -2833,14 +2821,14 @@ Search::reportArrivalCountHistogram() const
 Tag *
 Search::tag(TagIndex index) const
 {
-  UniqueLock lock(tag_lock_);
+  SharedLock lock(tag_lock_);
   return tags_[index];
 }
 
 TagIndex
 Search::tagCount() const
 {
-  UniqueLock lock(tag_lock_);
+  SharedLock lock(tag_lock_);
   return tag_set_->size();
 }
 
@@ -2856,9 +2844,13 @@ Search::findTag(const RiseFall *rf,
 {
   Tag probe(0, rf->index(), path_ap->index(), clk_info, is_clk, input_delay,
 	    is_segment_start, states, false, this);
-  UniqueLock lock(tag_lock_);
-  Tag *tag = tag_set_->findKey(&probe);
+  Tag *tag;
+  {
+    SharedLock lock(tag_lock_);
+    tag = tag_set_->findKey(&probe);
+  }
   if (tag == nullptr) {
+    UniqueLock lock(tag_lock_);
     ExceptionStateSet *new_states = !own_states && states
       ? new ExceptionStateSet(*states) : states;
     TagIndex tag_index;
@@ -2876,20 +2868,9 @@ Search::findTag(const RiseFall *rf,
     // other threads via tag_set_.
     tags_[tag_index] = tag;
     tag_set_->insert(tag);
-    // If tags_ needs to grow make the new array and copy the
-    // contents into it before updating tags_ so that other threads
-    // can use Search::tag(TagIndex) without returning gubbish.
-    // std::vector doesn't seem to follow this protocol so multi-thread
-    // search fails occasionally if a vector is used for tags_.
-    if (tag_next_ == tag_capacity_) {
-      TagIndex new_capacity = nextMersenne(tag_capacity_);
-      Tag **new_tags = new Tag*[new_capacity];
-      memcpy(new_tags, tags_, tag_capacity_ * sizeof(Tag*));
-      Tag **old_tags = tags_;
-      tags_ = new_tags;
-      delete [] old_tags;
-      tag_capacity_ = new_capacity;
-      tag_set_->reserve(new_capacity);
+    if (tag_next_ == tags_.size()) {
+      tags_.resize(nextMersenne(tags_.size()));
+      tag_set_->reserve(tags_.size());
     }
     if (tag_next_ == tag_index_max)
       report_->critical(1511, "max tag index exceeded");

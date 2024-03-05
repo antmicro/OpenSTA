@@ -21,7 +21,6 @@
 
 #include "Stats.hh"
 #include "Debug.hh"
-#include "Mutex.hh"
 #include "Fuzzy.hh"
 #include "MinMax.hh"
 #include "DispatchQueue.hh"
@@ -95,7 +94,7 @@ PathGroup::~PathGroup()
 bool
 PathGroup::savable(PathEnd *path_end)
 {
-  UniqueLock lock(lock_);
+  SharedLock lock(lock_);
   bool savable = false;
   if (compare_slack_) {
     // Crpr increases the slack, so check the slack

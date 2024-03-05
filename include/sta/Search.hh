@@ -1,23 +1,22 @@
 // OpenSTA, Static Timing Analyzer
 // Copyright (c) 2024, Parallax Software, Inc.
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <mutex>
-
+#include "Mutex.hh"
 #include "MinMax.hh"
 #include "UnorderedSet.hh"
 #include "Transition.hh"
@@ -558,7 +557,7 @@ protected:
   bool requireds_seeded_;
   // Vertices with invalid arrival times to update and search from.
   VertexSet *invalid_arrivals_;
-  std::mutex invalid_arrivals_lock_;
+  SharedMutex invalid_arrivals_lock_;
   BfsFwdIterator *arrival_iter_;
   // Vertices with invalid required times to update and search from.
   VertexSet *invalid_requireds_;
@@ -570,32 +569,29 @@ protected:
   SlackSeq tns_;
   // Indexed by path_ap->index().
   VertexSlackMapSeq tns_slacks_;
-  std::mutex tns_lock_;
+  SharedMutex tns_lock_;
   // Indexed by path_ap->index().
   WorstSlacks *worst_slacks_;
   // Use pointer to clk_info set so Tag.hh does not need to be included.
   ClkInfoSet *clk_info_set_;
-  std::mutex clk_info_lock_;
+  SharedMutex clk_info_lock_;
   // Use pointer to tag set so Tag.hh does not need to be included.
   TagSet *tag_set_;
   // Entries in tags_ may be missing where previous filter tags were deleted.
-  TagIndex tag_capacity_;
-  Tag **tags_;
+  std::vector<Tag *> tags_;
   TagIndex tag_next_;
   // Holes in tags_ left by deleting filter tags.
   std::vector<TagIndex> tag_free_indices_;
-  mutable std::mutex tag_lock_;
+  mutable SharedMutex tag_lock_;
   TagGroupSet *tag_group_set_;
-  TagGroup **tag_groups_;
+  std::vector<TagGroup *> tag_groups_;
   TagGroupIndex tag_group_next_;
   // Holes in tag_groups_ left by deleting filter tag groups.
   std::vector<TagIndex> tag_group_free_indices_;
-  // Capacity of tag_groups_.
-  TagGroupIndex tag_group_capacity_;
-  mutable std::mutex tag_group_lock_;
+  mutable SharedMutex tag_group_lock_;
   // Latches data outputs to queue on the next search pass.
   VertexSet *pending_latch_outputs_;
-  std::mutex pending_latch_outputs_lock_;
+  SharedMutex pending_latch_outputs_lock_;
   VertexSet *endpoints_;
   VertexSet *invalid_endpoints_;
   // Filter exception to tag arrivals for

@@ -18,7 +18,6 @@
 
 #include "Debug.hh"
 #include "Report.hh"
-#include "Mutex.hh"
 #include "Graph.hh"
 #include "Corner.hh"
 #include "Search.hh"

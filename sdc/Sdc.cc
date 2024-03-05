@@ -20,7 +20,6 @@
 
 #include "Stats.hh"
 #include "Debug.hh"
-#include "Mutex.hh"
 #include "Report.hh"
 #include "PatternMatch.hh"
 #include "MinMax.hh"

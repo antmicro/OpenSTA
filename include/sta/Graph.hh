@@ -17,10 +17,10 @@
 #pragma once
 
 #include <mutex>
-#include <atomic>
 
 #include "Iterator.hh"
 #include "Map.hh"
+#include "Mutex.hh"
 #include "Vector.hh"
 #include "ObjectTable.hh"
 #include "ArrayTable.hh"
@@ -253,11 +253,11 @@ protected:
   PinVertexMap pin_bidirect_drvr_vertex_map_;
   int arc_count_;
   ArrivalsTable arrivals_;
-  std::mutex arrivals_lock_;
+  SharedMutex arrivals_lock_;
   RequiredsTable requireds_;
-  std::mutex requireds_lock_;
+  SharedMutex requireds_lock_;
   PrevPathsTable prev_paths_;
-  mutable std::mutex prev_paths_lock_;
+  mutable SharedMutex prev_paths_lock_;
   Vector<bool> arc_delay_annotated_;
   int slew_rf_count_;
   bool have_arc_delays_;

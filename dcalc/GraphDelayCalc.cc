@@ -19,7 +19,6 @@
 #include "Debug.hh"
 #include "Stats.hh"
 #include "MinMax.hh"
-#include "Mutex.hh"
 #include "TimingRole.hh"
 #include "TimingArc.hh"
 #include "Liberty.hh"
