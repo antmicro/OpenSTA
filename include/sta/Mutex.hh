@@ -22,7 +22,39 @@
 
 namespace sta {
 
-using SharedMutex = std::shared_mutex;
+struct SharedMutex
+{
+  std::atomic<unsigned> count = 0;
+
+  void lock_shared()
+  {
+    unsigned expected = count.load(std::memory_order_acquire);
+    do {
+      while (expected == std::numeric_limits<unsigned>::max()) {
+        expected = count.load(std::memory_order_acquire);
+      }
+    } while (!count.compare_exchange_weak(expected, expected + 1, std::memory_order_acquire, std::memory_order_relaxed));
+  }
+
+  void unlock_shared()
+  {
+    count.fetch_sub(1, std::memory_order_release);
+  }
+
+  void lock()
+  {
+    unsigned expected = 0;
+    while (!count.compare_exchange_weak(expected, std::numeric_limits<unsigned>::max(), std::memory_order_acquire, std::memory_order_relaxed)) {
+      expected = 0;
+    }
+  }
+
+  void unlock()
+  {
+    count.store(0, std::memory_order_release);
+  }
+};
+
 using UniqueLock = std::unique_lock<SharedMutex>;
 using SharedLock = std::shared_lock<SharedMutex>;
 
