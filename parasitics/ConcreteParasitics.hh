@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include <mutex>
-
 #include "Map.hh"
+#include "Mutex.hh"
 #include "Set.hh"
 #include "MinMax.hh"
 #include "Parasitics.hh"
@@ -177,7 +176,7 @@ protected:
   // and transition.
   ConcreteParasiticMap drvr_parasitic_map_;
   ConcreteParasiticNetworkMap parasitic_network_map_;
-  mutable std::mutex lock_;
+  mutable SharedMutex lock_;
 
   friend class ConcretePiElmore;
   friend class ConcreteParasiticNode;

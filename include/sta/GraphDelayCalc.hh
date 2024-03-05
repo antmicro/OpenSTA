@@ -17,9 +17,9 @@
 #pragma once
 
 #include <vector>
-#include <mutex>
 
 #include "Map.hh"
+#include "Mutex.hh"
 #include "NetworkClass.hh"
 #include "GraphClass.hh"
 #include "SearchClass.hh"
@@ -270,13 +270,13 @@ protected:
   // Latch D->Q edges with invalid delays.
   EdgeSet invalid_latch_edges_;
   // shared by invalid_check_edges_ and invalid_latch_edges_
-  std::mutex invalid_edge_lock_;
+  SharedMutex invalid_edge_lock_;
   SearchPred *search_pred_;
   SearchPred *search_non_latch_pred_;
   SearchPred *clk_pred_;
   BfsFwdIterator *iter_;
   MultiDrvrNetMap multi_drvr_net_map_;
-  std::mutex multi_drvr_lock_;
+  SharedMutex multi_drvr_lock_;
   // Percentage (0.0:1.0) change in delay that causes downstream
   // delays to be recomputed during incremental delay calculation.
   float incremental_delay_tolerance_;

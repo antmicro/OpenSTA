@@ -156,7 +156,7 @@ static int tmp_string_count_ = 100;
 static char **tmp_strings_ = nullptr;
 static size_t *tmp_string_lengths_ = nullptr;
 static int tmp_string_next_;
-static std::mutex string_lock_;
+static SharedMutex string_lock_;
 
 void
 initTmpStrings()

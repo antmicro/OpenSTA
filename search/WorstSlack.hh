@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include <mutex>
-
 #include "MinMax.hh"
+#include "Mutex.hh"
 #include "Vector.hh"
 #include "GraphClass.hh"
 #include "SearchClass.hh"
@@ -103,7 +102,7 @@ protected:
   // reaches max_queue_size_.
   int min_queue_size_;
   int max_queue_size_;
-  std::mutex lock_;
+  SharedMutex lock_;
 };
 
 } // namespace

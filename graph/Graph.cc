@@ -519,7 +519,7 @@ Graph::makeArrivals(Vertex *vertex,
 Arrival *
 Graph::arrivals(Vertex *vertex)
 {
-  UniqueLock lock(arrivals_lock_);
+  SharedLock lock(arrivals_lock_);
   return arrivals_.pointer(vertex->arrivals());
 }
 
@@ -553,7 +553,7 @@ Graph::makeRequireds(Vertex *vertex,
 Required *
 Graph::requireds(Vertex *vertex)
 {
-  UniqueLock lock(requireds_lock_);
+  SharedLock lock(requireds_lock_);
   return requireds_.pointer(vertex->requireds());
 }
 
@@ -592,7 +592,7 @@ Graph::makePrevPaths(Vertex *vertex,
 PathVertexRep *
 Graph::prevPaths(Vertex *vertex) const
 {
-  UniqueLock lock(prev_paths_lock_);
+  SharedLock lock(prev_paths_lock_);
   return prev_paths_.pointer(vertex->prevPaths());
 }
 

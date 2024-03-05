@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include <mutex>
-
 #include "Map.hh"
+#include "Mutex.hh"
 #include "Vector.hh"
 #include "SdcClass.hh"
 #include "StaState.hh"
@@ -91,7 +90,7 @@ protected:
   const MinMax *min_max_;
   bool compare_slack_;
   float threshold_;
-  std::mutex lock_;
+  SharedMutex lock_;
   const StaState *sta_;
 };
 

@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include <mutex>
-
 #include "Iterator.hh"
+#include "Mutex.hh"
 #include "Set.hh"
 #include "GraphClass.hh"
 #include "VertexVisitor.hh"
@@ -104,7 +103,7 @@ protected:
   Level level_max_;
   SearchPred *search_pred_;
   LevelQueue queue_;
-  std::mutex queue_lock_;
+  SharedMutex queue_lock_;
   // Min (max) level of queued vertices.
   Level first_level_;
   // Max (min) level of queued vertices.

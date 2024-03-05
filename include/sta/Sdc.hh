@@ -16,11 +16,10 @@
 
 #pragma once
 
-#include <mutex>
-
 #include "StringUtil.hh"
 #include "StringSet.hh"
 #include "Map.hh"
+#include "Mutex.hh"
 #include "UnorderedMap.hh"
 #include "MinMax.hh"
 #include "StaState.hh"
@@ -1315,7 +1314,7 @@ protected:
   InstanceClockGatingCheckMap inst_clk_gating_check_map_;
   PinClockGatingCheckMap pin_clk_gating_check_map_;
   CycleAcctings cycle_acctings_;
-  std::mutex cycle_acctings_lock_;
+  SharedMutex cycle_acctings_lock_;
   DataChecksMap data_checks_from_map_;
   DataChecksMap data_checks_to_map_;
 
