@@ -254,6 +254,7 @@ set(STA_TCL_FILES
 #find_package(FLEX 2.6.4)
 find_package(FLEX)
 find_package(BISON)
+find_package(TBB REQUIRED)
 
 # LibertyExpr scan/parse.
 flex_target(LibertyExprLex ${STA_HOME}/liberty/LibertyExprLex.ll ${CMAKE_CURRENT_BINARY_DIR}/LibertyExprLex.cc
@@ -502,6 +503,7 @@ target_sources(OpenSTA
 target_link_libraries(OpenSTA
   ${TCL_LIBRARY}
   ${CMAKE_THREAD_LIBS_INIT}
+  TBB::tbb
   )
 
 if (TCL_READLINE_LIBRARY)
