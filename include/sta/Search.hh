@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <tbb/concurrent_vector.h>
+
 #include "Mutex.hh"
 #include "MinMax.hh"
 #include "UnorderedSet.hh"
@@ -578,13 +580,13 @@ protected:
   // Use pointer to tag set so Tag.hh does not need to be included.
   TagSet *tag_set_;
   // Entries in tags_ may be missing where previous filter tags were deleted.
-  std::vector<Tag *> tags_;
+  tbb::concurrent_vector<Tag *> tags_;
   TagIndex tag_next_;
   // Holes in tags_ left by deleting filter tags.
   std::vector<TagIndex> tag_free_indices_;
   mutable SharedMutex tag_lock_;
   TagGroupSet *tag_group_set_;
-  std::vector<TagGroup *> tag_groups_;
+  tbb::concurrent_vector<TagGroup *> tag_groups_;
   TagGroupIndex tag_group_next_;
   // Holes in tag_groups_ left by deleting filter tag groups.
   std::vector<TagIndex> tag_group_free_indices_;

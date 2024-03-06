@@ -2747,7 +2747,6 @@ Search::reportArrivals(Vertex *vertex) const
 TagGroup *
 Search::tagGroup(TagGroupIndex index) const
 {
-  SharedLock lock(tag_group_lock_);
   return tag_groups_[index];
 }
 
@@ -2758,7 +2757,6 @@ Search::tagGroup(const Vertex *vertex) const
   if (index == tag_group_index_max)
     return nullptr;
   else {
-    SharedLock lock(tag_group_lock_);
     return tag_groups_[index];
   }
 }
@@ -2821,7 +2819,6 @@ Search::reportArrivalCountHistogram() const
 Tag *
 Search::tag(TagIndex index) const
 {
-  SharedLock lock(tag_lock_);
   return tags_[index];
 }
 
