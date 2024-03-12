@@ -17,12 +17,14 @@
 #pragma once
 
 #include <mutex>
+#include <tbb/concurrent_unordered_map.h>
 
 #include "Map.hh"
 #include "Set.hh"
 #include "MinMax.hh"
 #include "EstimateParasitics.hh"
 #include "Parasitics.hh"
+
 
 namespace sta {
 
@@ -33,7 +35,7 @@ class ConcreteParasiticNetwork;
 class ConcreteParasiticNode;
 class ConcreteParasiticDevice;
 
-typedef Map<const Pin*, ConcreteParasitic**> ConcreteParasiticMap;
+typedef tbb::concurrent_unordered_map<const Pin*, ConcreteParasitic**> ConcreteParasiticMap;
 typedef Map<const Net*, ConcreteParasiticNetwork**> ConcreteParasiticNetworkMap;
 typedef Set<ParasiticNode*> ParasiticNodeSet;
 typedef Set<ParasiticDevice*> ParasiticDeviceSet;
@@ -238,7 +240,7 @@ protected:
 
   // Driver pin to array of parasitics indexed by analysis pt index
   // and transition.
-  ConcreteParasiticMap drvr_parasitic_map_;
+  mutable ConcreteParasiticMap drvr_parasitic_map_;
   ConcreteParasiticNetworkMap parasitic_network_map_;
   mutable std::mutex lock_;
 
