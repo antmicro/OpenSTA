@@ -961,7 +961,7 @@ ConcreteParasitics::findPiElmore(const Pin *drvr_pin,
   if (!drvr_parasitic_map_.empty()) {
     int ap_rf_index = parasiticAnalysisPtIndex(ap, rf);
     UniqueLock lock(lock_);
-    ConcreteParasitic **parasitics = drvr_parasitic_map_.findKey(drvr_pin);
+    ConcreteParasitic **parasitics = drvr_parasitic_map_.count(drvr_pin) > 0 ? drvr_parasitic_map_[drvr_pin] : nullptr;
     if (parasitics) {
       ConcreteParasitic *parasitic = parasitics[ap_rf_index];
       if (parasitic && parasitic->isPiElmore())
@@ -980,7 +980,7 @@ ConcreteParasitics::makePiElmore(const Pin *drvr_pin,
 				 float c1)
 {
   UniqueLock lock(lock_);
-  ConcreteParasitic **parasitics = drvr_parasitic_map_.findKey(drvr_pin);
+  ConcreteParasitic **parasitics = drvr_parasitic_map_.count(drvr_pin) > 0 ? drvr_parasitic_map_[drvr_pin] : nullptr;
   if (parasitics == nullptr) {
     int ap_count = corners_->parasiticAnalysisPtCount();
     int ap_rf_count = ap_count * RiseFall::index_count;
@@ -1077,7 +1077,7 @@ ConcreteParasitics::findPiPoleResidue(const Pin *drvr_pin,
   if (!drvr_parasitic_map_.empty()) {
     int ap_rf_index = parasiticAnalysisPtIndex(ap, rf);
     UniqueLock lock(lock_);
-    ConcreteParasitic **parasitics = drvr_parasitic_map_.findKey(drvr_pin);
+    ConcreteParasitic **parasitics = drvr_parasitic_map_.count(drvr_pin) > 0 ? drvr_parasitic_map_[drvr_pin] : nullptr;
     if (parasitics) {
       ConcreteParasitic *parasitic = parasitics[ap_rf_index];
       if (parasitic == nullptr && rf == RiseFall::fall()) {
@@ -1100,7 +1100,7 @@ ConcreteParasitics::makePiPoleResidue(const Pin *drvr_pin,
 				      float c1)
 {
   UniqueLock lock(lock_);
-  ConcreteParasitic **parasitics = drvr_parasitic_map_.findKey(drvr_pin);
+  ConcreteParasitic **parasitics = drvr_parasitic_map_.count(drvr_pin) > 0 ? drvr_parasitic_map_[drvr_pin] : nullptr;
   if (parasitics == nullptr) {
     int ap_count = corners_->parasiticAnalysisPtCount();
     int ap_rf_count = ap_count * RiseFall::index_count;

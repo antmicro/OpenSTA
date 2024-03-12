@@ -16,18 +16,21 @@
 
 #pragma once
 
+#include <tbb/concurrent_unordered_map.h>
+
 #include "Map.hh"
 #include "Mutex.hh"
 #include "Set.hh"
 #include "MinMax.hh"
 #include "Parasitics.hh"
 
+
 namespace sta {
 
 class ConcreteParasitic;
 class ConcreteParasiticNetwork;
 
-typedef Map<const Pin*, ConcreteParasitic**> ConcreteParasiticMap;
+typedef tbb::concurrent_unordered_map<const Pin*, ConcreteParasitic**> ConcreteParasiticMap;
 typedef Map<const Net*, ConcreteParasiticNetwork**> ConcreteParasiticNetworkMap;
 
 // This class acts as a BUILDER for parasitics.
@@ -178,7 +181,7 @@ protected:
 
   // Driver pin to array of parasitics indexed by analysis pt index
   // and transition.
-  ConcreteParasiticMap drvr_parasitic_map_;
+  mutable ConcreteParasiticMap drvr_parasitic_map_;
   ConcreteParasiticNetworkMap parasitic_network_map_;
   mutable SharedMutex lock_;
 
