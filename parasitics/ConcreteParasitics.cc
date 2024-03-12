@@ -1283,7 +1283,7 @@ ConcreteParasitics::findParasiticNetwork(const Net *net,
 					 const ParasiticAnalysisPt *ap) const
 {
   if (!parasitic_network_map_.empty()) {
-    UniqueLock lock(lock_);
+    // UniqueLock lock(lock_);
     if (!parasitic_network_map_.empty()) {
       ConcreteParasiticNetwork **parasitics=parasitic_network_map_.findKey(net);
       if (parasitics)
@@ -1298,7 +1298,7 @@ ConcreteParasitics::findParasiticNetwork(const Pin *pin,
 					 const ParasiticAnalysisPt *ap) const
 {
   if (!parasitic_network_map_.empty()) {
-    UniqueLock lock(lock_);
+    // UniqueLock lock(lock_);
     if (!parasitic_network_map_.empty()) {
       // Only call findParasiticNet if parasitics exist.
       const Net *net = findParasiticNet(pin);
