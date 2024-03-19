@@ -19,6 +19,8 @@
 #include <cstring> // memcpy
 #include <vector>
 
+#include <tbb/concurrent_vector.h>
+
 #include "ObjectId.hh"
 #include "Error.hh"
 
@@ -39,7 +41,6 @@ class ArrayTable
 {
 public:
   ArrayTable();
-  ~ArrayTable();
   void make(uint32_t count,
 	    TYPE *&array,
 	    ObjectId &id);
@@ -58,19 +59,13 @@ public:
 
 private:
   ArrayBlock<TYPE> *makeBlock(uint32_t size);
-  void pushBlock(ArrayBlock<TYPE> *block);
-  void deleteBlocks();
 
   size_t size_;
-  // Block index of free block (blocks_[size - 1]).
+  // Block index of free block
   BlockIdx free_block_idx_;
-  // Index of next free object in free_block_idx_.
+  // Index of next free object in the last block.
   ObjectIdx free_idx_;
-  // Don't use std::vector so growing blocks_ can be thread safe.
-  size_t blocks_size_;
-  size_t blocks_capacity_;
-  ArrayBlock<TYPE>* *blocks_;
-  ArrayBlock<TYPE>* *prev_blocks_;
+  tbb::concurrent_vector<ArrayBlock<TYPE>> blocks_;
   // Linked list of free arrays indexed by array size.
   std::vector<ObjectId> free_list_;
   static constexpr ObjectId idx_mask_ = block_size - 1;
@@ -80,28 +75,8 @@ template <class TYPE>
 ArrayTable<TYPE>::ArrayTable() :
   size_(0),
   free_block_idx_(block_idx_null),
-  free_idx_(object_idx_null),
-  blocks_size_(0),
-  blocks_capacity_(1024),
-  blocks_(new ArrayBlock<TYPE>*[blocks_capacity_]),
-  prev_blocks_(nullptr)
+  free_idx_(object_idx_null)
 {
-}
-
-template <class TYPE>
-ArrayTable<TYPE>::~ArrayTable()
-{
-  deleteBlocks();
-  delete [] blocks_;
-  delete [] prev_blocks_;
-}
-
-template <class TYPE>
-void
-ArrayTable<TYPE>::deleteBlocks()
-{
-  for (size_t i = 0; i < blocks_size_; i++)
-    delete blocks_[i];
 }
 
 template <class TYPE>
@@ -120,12 +95,11 @@ ArrayTable<TYPE>::make(uint32_t count,
     free_list_[count] = *head;
   }
   else {
-    ArrayBlock<TYPE> *block = blocks_size_ ? blocks_[free_block_idx_] : nullptr;
-    if ((free_idx_ == object_idx_null
-         && free_block_idx_ == block_idx_null)
+    ArrayBlock<TYPE> *block = blocks_.empty() ? nullptr : &blocks_[free_block_idx_];
+    if (!block
         || free_idx_ + count >= block->size()) {
       uint32_t size = block_size;
-      if (blocks_size_ == 0
+      if (!block
           // First block starts at idx 1.
           && count > block_size - 1)
         size = count + 1;
@@ -133,7 +107,6 @@ ArrayTable<TYPE>::make(uint32_t count,
         size = count;
       block = makeBlock(size);
     }
-    // makeId(free_block_idx_, idx_bits)
     id = (free_block_idx_ << idx_bits) + free_idx_;
     array = block->pointer(free_idx_);
     free_idx_ += count;
@@ -145,33 +118,12 @@ template <class TYPE>
 ArrayBlock<TYPE> *
 ArrayTable<TYPE>::makeBlock(uint32_t size)
 {
-  BlockIdx block_idx = blocks_size_;
-  ArrayBlock<TYPE> *block = new ArrayBlock<TYPE>(size);
-  pushBlock(block); 
+  BlockIdx block_idx = blocks_.size();
+  blocks_.push_back(ArrayBlock<TYPE>(size));
   free_block_idx_ = block_idx;
   // ObjectId zero is reserved for object_id_null.
   free_idx_ = (block_idx > 0) ? 0 : 1;
-  return block;
-}
-
-template <class TYPE>
-void
-ArrayTable<TYPE>::pushBlock(ArrayBlock<TYPE> *block)
-{
-  blocks_[blocks_size_++] = block;
-  if (blocks_size_ >= block_id_max)
-    criticalError(223, "max array table block count exceeded.");
-  if (blocks_size_ == blocks_capacity_) {
-    size_t new_capacity = blocks_capacity_ * 1.5;
-    ArrayBlock<TYPE>** new_blocks = new ArrayBlock<TYPE>*[new_capacity];
-    memcpy(new_blocks, blocks_, blocks_capacity_ * sizeof(ArrayBlock<TYPE>*));
-    if (prev_blocks_)
-      delete [] prev_blocks_;
-    // Preserve block array for other threads to reference.
-    prev_blocks_ = blocks_;
-    blocks_ = new_blocks;
-    blocks_capacity_ = new_capacity;
-  }
+  return &blocks_.back();
 }
 
 template <class TYPE>
@@ -198,7 +150,7 @@ ArrayTable<TYPE>::pointer(ObjectId id) const
   else {
     BlockIdx blk_idx = id >> idx_bits;
     ObjectIdx obj_idx = id & idx_mask_;
-    return blocks_[blk_idx]->pointer(obj_idx);
+    return blocks_[blk_idx].pointer(obj_idx);
   }
 }
 
@@ -209,11 +161,10 @@ ArrayTable<TYPE>::ensureId(ObjectId id)
   BlockIdx blk_idx = id >> idx_bits;
   ObjectIdx obj_idx = id & idx_mask_;
   // Make enough blocks for blk_idx to be valid.
-  for (BlockIdx i = blocks_size_; i <= blk_idx; i++) {
-    ArrayBlock<TYPE> *block = new ArrayBlock<TYPE>(block_size);
-    pushBlock(block);
+  for (BlockIdx i = blocks_.size(); i <= blk_idx; i++) {
+    blocks_.push_back(ArrayBlock<TYPE>(block_size));
   }
-  return blocks_[blk_idx]->pointer(obj_idx);
+  return blocks_[blk_idx].pointer(obj_idx);
 }
 
 template <class TYPE>
@@ -225,15 +176,14 @@ ArrayTable<TYPE>::ref(ObjectId id) const
 
   BlockIdx blk_idx = id >> idx_bits;
   ObjectIdx obj_idx = id & idx_mask_;
-  return blocks_[blk_idx]->ref(obj_idx);
+  return blocks_[blk_idx].ref(obj_idx);
 }
 
 template <class TYPE>
 void
 ArrayTable<TYPE>::clear()
 {
-  deleteBlocks();
-  blocks_size_ = 0;
+  blocks_.clear();
   size_ = 0;
   free_block_idx_ = block_idx_null;
   free_idx_ = object_idx_null;
@@ -247,27 +197,20 @@ class ArrayBlock
 {
 public:
   ArrayBlock(uint32_t size);
-  ~ArrayBlock();
-  uint32_t size() const { return size_; }
+  uint32_t size() const { return objects_.size(); }
+  TYPE &ref(ObjectIdx idx) const { return objects_[idx]; }
+  TYPE *pointer(ObjectIdx idx) const { return &objects_[idx]; }
   TYPE &ref(ObjectIdx idx) { return objects_[idx]; }
   TYPE *pointer(ObjectIdx idx) { return &objects_[idx]; }
 
 private:
-  uint32_t size_;
-  TYPE *objects_;
+  mutable std::vector<TYPE> objects_;
 };
 
 template <class TYPE>
 ArrayBlock<TYPE>::ArrayBlock(uint32_t size) :
-  size_(size),
-  objects_(new TYPE[size])
+  objects_(size)
 {
-}
-
-template <class TYPE>
-ArrayBlock<TYPE>::~ArrayBlock()
-{
-  delete [] objects_;
 }
 
 } // Namespace

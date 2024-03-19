@@ -254,6 +254,7 @@ protected:
   DcalcAPIndex ap_count_;
   DelayTableSeq slew_tables_;	      // [ap_index][tr_index][vertex_id]
   VertexId slew_count_;
+  SharedMutex delays_lock_;
   DelayTableSeq arc_delays_;	      // [ap_index][edge_arc_index]
   // Sdf width check annotations.
   WidthCheckAnnotations *width_check_annotations_;
